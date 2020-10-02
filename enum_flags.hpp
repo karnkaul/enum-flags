@@ -6,16 +6,14 @@
 #include <bitset>
 #include <type_traits>
 
-namespace kt
-{
+namespace kt {
 ///
 /// \brief Type-safe and index-safe wrapper for `std::bitset`
 /// \param `Enum`: enum [class] type
 /// \param `N`: number of bits (defaults to Enum::eCOUNT_)
 ///
 template <typename Enum, std::size_t N = (std::size_t)Enum::eCOUNT_>
-struct enum_flags
-{
+struct enum_flags {
 	static_assert(std::is_enum_v<Enum>, "Enum must be an enum!");
 
 	using type = Enum;
@@ -137,156 +135,132 @@ constexpr kt::enum_flags<Enum, N> operator&(Enum flag1, Enum flag2) noexcept;
 template <typename Enum, std::size_t N = (std::size_t)Enum::eCOUNT_>
 constexpr kt::enum_flags<Enum, N> operator^(Enum flag1, Enum flag2) noexcept;
 
-namespace kt
-{
+namespace kt {
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N> enum_flags<Enum, N>::inverse() noexcept
-{
+constexpr enum_flags<Enum, N> enum_flags<Enum, N>::inverse() noexcept {
 	return enum_flags<Enum, N>().flip();
 }
 
 template <typename Enum, std::size_t N>
-constexpr /*implicit*/ enum_flags<Enum, N>::enum_flags(Enum flag) noexcept
-{
+constexpr /*implicit*/ enum_flags<Enum, N>::enum_flags(Enum flag) noexcept {
 	bits.set((std::size_t)flag);
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool enum_flags<Enum, N>::test(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr bool enum_flags<Enum, N>::test(enum_flags<Enum, N> flags) const noexcept {
 	return (bits & flags.bits) == flags.bits;
 }
 
 template <typename Enum, std::size_t N>
-constexpr std::size_t enum_flags<Enum, N>::test() const noexcept
-{
+constexpr std::size_t enum_flags<Enum, N>::test() const noexcept {
 	return bits.count();
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::set(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::set(enum_flags<Enum, N> flags) noexcept {
 	bits |= flags.bits;
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::reset(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::reset(enum_flags<Enum, N> flags) noexcept {
 	bits &= flags.bits.flip();
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::flip(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::flip(enum_flags<Enum, N> flags) noexcept {
 	bits ^= flags.bits;
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool enum_flags<Enum, N>::all(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr bool enum_flags<Enum, N>::all(enum_flags<Enum, N> flags) const noexcept {
 	return (flags.bits & bits) == bits;
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool enum_flags<Enum, N>::any(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr bool enum_flags<Enum, N>::any(enum_flags<Enum, N> flags) const noexcept {
 	return (flags.bits & bits).any();
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool enum_flags<Enum, N>::none(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr bool enum_flags<Enum, N>::none(enum_flags<Enum, N> flags) const noexcept {
 	return (flags.bits & bits).none();
 }
 
 template <typename Enum, std::size_t N>
-constexpr std::size_t enum_flags<Enum, N>::count(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr std::size_t enum_flags<Enum, N>::count(enum_flags<Enum, N> flags) const noexcept {
 	return (flags.bits & bits).count();
 }
 
 template <typename Enum, std::size_t N>
-constexpr typename std::bitset<N>::reference enum_flags<Enum, N>::operator[](Enum flag) noexcept
-{
+constexpr typename std::bitset<N>::reference enum_flags<Enum, N>::operator[](Enum flag) noexcept {
 	return bits[(std::size_t)flag];
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator|=(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator|=(enum_flags<Enum, N> flags) noexcept {
 	bits |= flags.bits;
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator&=(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator&=(enum_flags<Enum, N> flags) noexcept {
 	bits &= flags.bits;
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator^=(enum_flags<Enum, N> flags) noexcept
-{
+constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::operator^=(enum_flags<Enum, N> flags) noexcept {
 	bits ^= flags.bits;
 	return *this;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator|(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator|(enum_flags<Enum, N> flags) const noexcept {
 	auto ret = *this;
 	ret |= flags;
 	return ret;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator&(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator&(enum_flags<Enum, N> flags) const noexcept {
 	auto ret = *this;
 	ret &= flags;
 	return ret;
 }
 
 template <typename Enum, std::size_t N>
-constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator^(enum_flags<Enum, N> flags) const noexcept
-{
+constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator^(enum_flags<Enum, N> flags) const noexcept {
 	auto ret = *this;
 	ret ^= flags;
 	return ret;
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool operator==(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept
-{
+constexpr bool operator==(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept {
 	return lhs.bits == rhs.bits;
 }
 
 template <typename Enum, std::size_t N>
-constexpr bool operator!=(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept
-{
+constexpr bool operator!=(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept {
 	return !(lhs == rhs);
 }
 
 } // namespace kt
 
 template <typename Enum, std::size_t N>
-constexpr kt::enum_flags<Enum, N> operator|(Enum flag1, Enum flag2) noexcept
-{
+constexpr kt::enum_flags<Enum, N> operator|(Enum flag1, Enum flag2) noexcept {
 	return kt::enum_flags<Enum, N>(flag1) | kt::enum_flags<Enum, N>(flag2);
 }
 
 template <typename Enum, std::size_t N>
-constexpr kt::enum_flags<Enum, N> operator&(Enum flag1, Enum flag2) noexcept
-{
+constexpr kt::enum_flags<Enum, N> operator&(Enum flag1, Enum flag2) noexcept {
 	return kt::enum_flags<Enum, N>(flag1) & kt::enum_flags<Enum, N>(flag2);
 }
 
 template <typename Enum, std::size_t N>
-constexpr kt::enum_flags<Enum, N> operator^(Enum flag1, Enum flag2) noexcept
-{
+constexpr kt::enum_flags<Enum, N> operator^(Enum flag1, Enum flag2) noexcept {
 	return kt::enum_flags<Enum, N>(flag1) ^ kt::enum_flags<Enum, N>(flag2);
 }
