@@ -171,7 +171,7 @@ constexpr enum_flags<Enum, N>& enum_flags<Enum, N>::flip(enum_flags<Enum, N> fla
 }
 template <typename Enum, std::size_t N>
 constexpr bool enum_flags<Enum, N>::all(enum_flags<Enum, N> flags) const noexcept {
-	return (flags.bits & bits) == bits;
+	return (flags.bits & bits) == flags.bits;
 }
 template <typename Enum, std::size_t N>
 constexpr bool enum_flags<Enum, N>::any(enum_flags<Enum, N> flags) const noexcept {
