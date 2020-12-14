@@ -42,27 +42,15 @@ struct enum_flags {
 	///
 	/// \brief Set passed flags
 	///
-	constexpr enum_flags<Enum, N>& set(enum_flags<Enum, N> flags) noexcept;
+	constexpr enum_flags<Enum, N>& set(enum_flags<Enum, N> flags = inverse()) noexcept;
 	///
 	/// \brief Reset passed flags
 	///
-	constexpr enum_flags<Enum, N>& reset(enum_flags<Enum, N> flags) noexcept;
+	constexpr enum_flags<Enum, N>& reset(enum_flags<Enum, N> flags = inverse()) noexcept;
 	///
 	/// \brief Flip passed flags
 	///
-	constexpr enum_flags<Enum, N>& flip(enum_flags<Enum, N> flags) noexcept;
-	///
-	/// \brief Set all flags
-	///
-	constexpr enum_flags<Enum, N>& set() noexcept;
-	///
-	/// \brief Reset all flags
-	///
-	constexpr enum_flags<Enum, N>& reset() noexcept;
-	//
-	/// \brief Flip all flags
-	///
-	constexpr enum_flags<Enum, N>& flip() noexcept;
+	constexpr enum_flags<Enum, N>& flip(enum_flags<Enum, N> flags = inverse()) noexcept;
 	///
 	/// \brief Check if all passed flags are set
 	///
@@ -140,7 +128,9 @@ constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator^(Enum flag1,
 namespace kt {
 template <typename Enum, std::size_t N>
 constexpr enum_flags<Enum, N> enum_flags<Enum, N>::inverse() noexcept {
-	return enum_flags<Enum, N>().flip();
+	enum_flags<Enum, N> ret;
+	ret.bits.flip();
+	return ret;
 }
 template <typename Enum, std::size_t N>
 constexpr /*implicit*/ enum_flags<Enum, N>::enum_flags(Enum flag) noexcept {
