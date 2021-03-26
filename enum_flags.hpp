@@ -27,6 +27,10 @@ struct enum_flags {
 
 	constexpr enum_flags() noexcept = default;
 	///
+	/// \brief Construct via uint representation of flags
+	///
+	constexpr /*implicit*/ enum_flags(std::uint64_t value) noexcept;
+	///
 	/// \brief Construct with a single flag set
 	///
 	constexpr /*implicit*/ enum_flags(Enum flag) noexcept;
@@ -105,27 +109,9 @@ struct enum_flags {
 		return !(lhs == rhs);
 	}
 };
-} // namespace kt
-
-///
-/// \brief Add two flags
-///
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator|(Enum flag1, Enum flag2) noexcept;
-///
-/// \brief Multiply two flags
-///
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator&(Enum flag1, Enum flag2) noexcept;
-///
-/// \brief Exclusively add two flags
-///
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator^(Enum flag1, Enum flag2) noexcept;
 
 // impl
 
-namespace kt {
 template <typename Enum, std::size_t N>
 constexpr enum_flags<Enum, N> enum_flags<Enum, N>::inverse() noexcept {
 	enum_flags<Enum, N> ret;
@@ -133,7 +119,11 @@ constexpr enum_flags<Enum, N> enum_flags<Enum, N>::inverse() noexcept {
 	return ret;
 }
 template <typename Enum, std::size_t N>
-constexpr /*implicit*/ enum_flags<Enum, N>::enum_flags(Enum flag) noexcept {
+constexpr enum_flags<Enum, N>::enum_flags(std::uint64_t value) noexcept {
+	bits = value;
+}
+template <typename Enum, std::size_t N>
+constexpr enum_flags<Enum, N>::enum_flags(Enum flag) noexcept {
 	bits.set((std::size_t)flag);
 }
 template <typename Enum, std::size_t N>
@@ -213,16 +203,3 @@ constexpr enum_flags<Enum, N> enum_flags<Enum, N>::operator^(enum_flags<Enum, N>
 	return ret;
 }
 } // namespace kt
-
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator|(Enum flag1, Enum flag2) noexcept {
-	return kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag1) | kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag2);
-}
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator&(Enum flag1, Enum flag2) noexcept {
-	return kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag1) & kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag2);
-}
-template <typename Enum>
-constexpr kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_> operator^(Enum flag1, Enum flag2) noexcept {
-	return kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag1) ^ kt::enum_flags<Enum, (std::size_t)Enum::eCOUNT_>(flag2);
-}
