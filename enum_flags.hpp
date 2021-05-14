@@ -101,13 +101,9 @@ struct enum_flags {
 	///
 	constexpr enum_flags<Enum, N> operator^(enum_flags<Enum, N> flags) const noexcept;
 
-	friend constexpr bool operator==(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept {
-		return lhs.bits == rhs.bits;
-	}
+	friend constexpr bool operator==(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept { return lhs.bits == rhs.bits; }
 
-	friend constexpr bool operator!=(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept {
-		return !(lhs == rhs);
-	}
+	friend constexpr bool operator!=(enum_flags<Enum, N> lhs, enum_flags<Enum, N> rhs) noexcept { return !(lhs == rhs); }
 };
 
 // impl
