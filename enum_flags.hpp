@@ -2,167 +2,213 @@
 // Requirements: C++17
 
 #pragma once
-#include <algorithm>
-#include <bitset>
+#include <cstdint>
 #include <type_traits>
 
 namespace kt {
 ///
-/// \brief Type-safe and index-safe wrapper for `std::bitset`
-/// \param `Enum`: enum [class] type
-/// \param `N`: number of bits (defaults to Enum::eCOUNT_)
+/// \brief Trait for linear enums (0, 1, 2, 3, ...)
 ///
-template <typename Enum, Enum Begin = static_cast<Enum>(0), Enum End = Enum::eCOUNT_>
-struct enum_flags {
-	static_assert(std::is_enum_v<Enum>, "Enum must be an enum!");
+struct enum_trait_linear {};
+///
+/// \brief Trait for power of two enums (1, 2, 4, 8, ...)
+///
+struct enum_trait_pot {};
 
-	using value_type = Enum;
-	using u_type = std::underlying_type_t<Enum>;
-	using size_type = std::size_t;
-	static constexpr size_type size_v = static_cast<size_type>(static_cast<u_type>(End) - static_cast<u_type>(Begin));
+namespace detail {
+template <typename T, typename... U>
+constexpr bool any_same_v = (std::is_same_v<T, U> || ...);
+}
 
-	using storage = std::bitset<size_v>;
-	using reference = typename storage::reference;
+///
+/// \brief Wrapper around an integral type used as bit flags
+///
+template <typename Enum, typename Ty = std::uint32_t, typename Tr = enum_trait_linear>
+class enum_flags {
+	static_assert(std::is_enum_v<Enum>, "Enum must be an enum");
+	static_assert(std::is_integral_v<Ty>, "Ty must be integral");
+	static_assert(detail::any_same_v<Tr, enum_trait_linear, enum_trait_pot>, "Invalid enum trait");
 
-	storage bits;
-
-	static constexpr enum_flags<Enum, Begin, End> inverse() noexcept;
-
-	constexpr enum_flags() noexcept = default;
-	///
-	/// \brief Construct via uint representation of flags
-	///
-	constexpr /*implicit*/ enum_flags(std::uint64_t value) noexcept { bits = value; }
-	///
-	/// \brief Construct with a single flag set
-	///
-	constexpr /*implicit*/ enum_flags(Enum flag) noexcept { bits.set((std::size_t)flag); }
-
-	///
-	/// \brief Check if passed flags are set
-	///
-	constexpr bool test(enum_flags<Enum, Begin, End> flags) const noexcept { return (bits & flags.bits) == flags.bits; }
-	///
-	/// \brief Obtain count of set flags
-	///
-	constexpr size_type test() const noexcept { return bits.count(); }
-	///
-	/// \brief Set passed flags
-	///
-	constexpr enum_flags<Enum, Begin, End>& set(enum_flags<Enum, Begin, End> flags = inverse()) noexcept;
-	///
-	/// \brief Reset passed flags
-	///
-	constexpr enum_flags<Enum, Begin, End>& reset(enum_flags<Enum, Begin, End> flags = inverse()) noexcept;
-	///
-	/// \brief Flip passed flags
-	///
-	constexpr enum_flags<Enum, Begin, End>& flip(enum_flags<Enum, Begin, End> flags = inverse()) noexcept;
-	///
-	/// \brief Check if all passed flags are set
-	///
-	constexpr bool all(enum_flags<Enum, Begin, End> flags = inverse()) const noexcept { return (flags.bits & bits) == flags.bits; }
-	///
-	/// \brief Check if any passed flags are set
-	///
-	constexpr bool any(enum_flags<Enum, Begin, End> flags = inverse()) const noexcept { return (flags.bits & bits).any(); }
-	///
-	/// \brief Check if no passed flags are set
-	///
-	constexpr bool none(enum_flags<Enum, Begin, End> flags = inverse()) const noexcept { return (flags.bits & bits).none(); }
-	///
-	/// \brief Obtain count of set flags
-	///
-	constexpr size_type count(enum_flags<Enum, Begin, End> flags = inverse()) const noexcept { return (flags.bits & bits).count(); }
+  public:
+	using type = Enum;
+	using storage_t = Ty;
+	static constexpr bool is_linear_v = std::is_same_v<Tr, enum_trait_linear>;
 
 	///
-	/// \brief Obtain a reference to the flag
+	/// \brief Build an instance by setting t
 	///
-	constexpr reference operator[](Enum flag) noexcept { return bits[(std::size_t)flag]; }
-	///
-	/// \brief Perform bitwise `OR` / add flags
-	///
-	constexpr enum_flags<Enum, Begin, End>& operator|=(enum_flags<Enum, Begin, End> flags) noexcept;
-	///
-	/// \brief Perform bitwise `AND` / multiply flags
-	///
-	constexpr enum_flags<Enum, Begin, End>& operator&=(enum_flags<Enum, Begin, End> flags) noexcept;
-	///
-	/// \brief Perform bitwise `XOR` / exclusively add flags (add mod 2)
-	///
-	constexpr enum_flags<Enum, Begin, End>& operator^=(enum_flags<Enum, Begin, End> flags) noexcept;
-	///
-	/// \brief Perform bitwise `OR` / add flags
-	///
-	constexpr enum_flags<Enum, Begin, End> operator|(enum_flags<Enum, Begin, End> flags) const noexcept;
-	///
-	/// \brief Perform bitwise `AND` / multiply flags
-	///
-	constexpr enum_flags<Enum, Begin, End> operator&(enum_flags<Enum, Begin, End> flags) const noexcept;
-	///
-	/// \brief Perform bitwise `XOR` / exclusively add flags (add mod 2)
-	///
-	constexpr enum_flags<Enum, Begin, End> operator^(enum_flags<Enum, Begin, End> flags) const noexcept;
+	template <typename... T>
+	static constexpr enum_flags make(T... t) noexcept;
 
-	friend constexpr bool operator==(enum_flags<Enum, Begin, End> lhs, enum_flags<Enum, Begin, End> rhs) noexcept { return lhs.bits == rhs.bits; }
+	///
+	/// \brief Default constructor
+	///
+	constexpr enum_flags() = default;
+	///
+	/// \brief Set flag e
+	///
+	constexpr enum_flags(Enum e) noexcept;
+	///
+	/// \brief Set inputs
+	///
+	template <typename... T>
+	constexpr enum_flags(T... t) noexcept;
+	///
+	/// \brief Conversion operator
+	///
+	constexpr explicit operator Ty() const noexcept { return m_bits; }
 
-	friend constexpr bool operator!=(enum_flags<Enum, Begin, End> lhs, enum_flags<Enum, Begin, End> rhs) noexcept { return !(lhs == rhs); }
+	///
+	/// \brief Set inputs
+	///
+	template <typename... T>
+	constexpr enum_flags& set(T... t) noexcept;
+	///
+	/// \brief Remove inputs
+	///
+	template <typename... T>
+	constexpr enum_flags& reset(T... t) noexcept;
+	///
+	/// \brief Assign value to mask bits
+	///
+	constexpr enum_flags& assign(enum_flags mask, bool value) noexcept;
+
+	///
+	/// \brief Test if e is set
+	///
+	constexpr bool test(Enum e) const noexcept { return all(e); }
+	///
+	/// \brief Test if e is set
+	///
+	constexpr bool operator[](Enum e) const noexcept { return test(e); }
+	///
+	/// \brief Test if any bits are set
+	///
+	constexpr bool any() const noexcept { return m_bits != Ty{}; }
+	///
+	/// \brief Test if any bits in mask are set
+	///
+	constexpr bool any(enum_flags mask) const noexcept { return (m_bits & mask.m_bits) != Ty{}; }
+	///
+	/// \brief Test if all bits in mask are set
+	///
+	constexpr bool all(enum_flags mask) const noexcept { return (m_bits & mask.m_bits) == mask.m_bits; }
+	///
+	/// \brief Obtain number of set bits
+	///
+	constexpr std::size_t count() const noexcept;
+	///
+	/// \brief Add set bits and remove unset bits
+	///
+	constexpr enum_flags& update(enum_flags set, enum_flags reset = {}) noexcept;
+
+	///
+	/// \brief Compare two enum_flags
+	///
+	friend constexpr bool operator==(enum_flags a, enum_flags b) noexcept { return a.m_bits == b.m_bits; }
+	///
+	/// \brief Compare two enum_flags
+	///
+	friend constexpr bool operator!=(enum_flags a, enum_flags b) noexcept { return !(a == b); }
+
+	///
+	/// \brief Perform bitwise OR / add flags
+	///
+	constexpr enum_flags& operator|=(enum_flags mask) noexcept { return (m_bits |= mask.m_bits, *this); }
+	///
+	/// \brief Perform bitwise AND / multiply flags
+	///
+	constexpr enum_flags& operator&=(enum_flags mask) noexcept { return (m_bits &= mask.m_bits, *this); }
+	///
+	/// \brief Perform bitwise XOR / exclusively add flags (add mod 2)
+	///
+	constexpr enum_flags& operator^=(enum_flags mask) noexcept { return (m_bits ^= mask.m_bits, *this); }
+
+	///
+	/// \brief Perform bitwise OR / add flags
+	///
+	friend constexpr enum_flags operator|(enum_flags lhs, enum_flags rhs) noexcept { return lhs |= rhs; }
+	///
+	/// \brief Perform bitwise AND / multiply flags
+	///
+	friend constexpr enum_flags operator&(enum_flags lhs, enum_flags rhs) noexcept { return lhs &= rhs; }
+	///
+	/// \brief Perform bitwise XOR / exclusively add flags (add mod 2)
+	///
+	friend constexpr enum_flags operator^(enum_flags lhs, enum_flags rhs) noexcept { return lhs ^= rhs; }
+
+  private:
+	Ty m_bits{};
 };
 
 // impl
+} // namespace kt
 
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End> enum_flags<Enum, Begin, End>::inverse() noexcept {
-	enum_flags<Enum, Begin, End> ret;
-	ret.bits.flip();
+namespace kt {
+namespace detail {
+template <typename Enum, typename Ty, typename Tr, typename T>
+constexpr bool enum_flags_valid_arg = std::is_same_v<T, Enum> || std::is_same_v<T, enum_flags<Enum, Ty, Tr>>;
+}
+
+template <typename Enum, typename Ty, typename Tr>
+constexpr enum_flags<Enum, Ty, Tr>::enum_flags(Enum e) noexcept {
+	if constexpr (is_linear_v) {
+		m_bits |= (1 << static_cast<Ty>(e));
+	} else {
+		m_bits |= static_cast<Ty>(e);
+	}
+}
+template <typename Enum, typename Ty, typename Tr>
+template <typename... T>
+constexpr enum_flags<Enum, Ty, Tr>::enum_flags(T... t) noexcept {
+	set(t...);
+}
+template <typename Enum, typename Ty, typename Tr>
+template <typename... T>
+constexpr enum_flags<Enum, Ty, Tr> enum_flags<Enum, Ty, Tr>::make(T... t) noexcept {
+	static_assert((detail::enum_flags_valid_arg<Enum, Ty, Tr, T> && ...), "Invalid T");
+	enum_flags ret{};
+	ret.set(t...);
 	return ret;
 }
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::set(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits |= flags.bits;
+template <typename Enum, typename Ty, typename Tr>
+template <typename... T>
+constexpr enum_flags<Enum, Ty, Tr>& enum_flags<Enum, Ty, Tr>::set(T... t) noexcept {
+	static_assert((detail::enum_flags_valid_arg<Enum, Ty, Tr, T> && ...), "Invalid T");
+	(update(t), ...);
 	return *this;
 }
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::reset(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits &= flags.bits.flip();
+template <typename Enum, typename Ty, typename Tr>
+template <typename... T>
+constexpr enum_flags<Enum, Ty, Tr>& enum_flags<Enum, Ty, Tr>::reset(T... t) noexcept {
+	static_assert((detail::enum_flags_valid_arg<Enum, Ty, Tr, T> && ...), "Invalid T");
+	(update({}, t), ...);
 	return *this;
 }
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::flip(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits ^= flags.bits;
+template <typename Enum, typename Ty, typename Tr>
+constexpr enum_flags<Enum, Ty, Tr>& enum_flags<Enum, Ty, Tr>::assign(enum_flags mask, bool value) noexcept {
+	if (value) {
+		set(mask);
+	} else {
+		reset(mask);
+	}
 	return *this;
 }
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::operator|=(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits |= flags.bits;
+template <typename Enum, typename Ty, typename Tr>
+constexpr enum_flags<Enum, Ty, Tr>& enum_flags<Enum, Ty, Tr>::update(enum_flags set, enum_flags unset) noexcept {
+	m_bits |= set.m_bits;
+	m_bits &= ~unset.m_bits;
 	return *this;
 }
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::operator&=(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits &= flags.bits;
-	return *this;
-}
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End>& enum_flags<Enum, Begin, End>::operator^=(enum_flags<Enum, Begin, End> flags) noexcept {
-	bits ^= flags.bits;
-	return *this;
-}
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End> enum_flags<Enum, Begin, End>::operator|(enum_flags<Enum, Begin, End> flags) const noexcept {
-	auto ret = *this;
-	ret |= flags;
-	return ret;
-}
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End> enum_flags<Enum, Begin, End>::operator&(enum_flags<Enum, Begin, End> flags) const noexcept {
-	auto ret = *this;
-	ret &= flags;
-	return ret;
-}
-template <typename Enum, Enum Begin, Enum End>
-constexpr enum_flags<Enum, Begin, End> enum_flags<Enum, Begin, End>::operator^(enum_flags<Enum, Begin, End> flags) const noexcept {
-	auto ret = *this;
-	ret ^= flags;
+
+template <typename Enum, typename Ty, typename Tr>
+constexpr std::size_t enum_flags<Enum, Ty, Tr>::count() const noexcept {
+	std::size_t ret{};
+	Ty bit = static_cast<Ty>(1);
+	for (std::size_t i = 0; i < sizeof(Ty) * 8; ++i) {
+		if ((m_bits & bit) != 0) { ++ret; }
+		bit <<= 1;
+	}
 	return ret;
 }
 } // namespace kt
