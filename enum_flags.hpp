@@ -3,17 +3,9 @@
 
 #pragma once
 #include "enum_flags_crtp.hpp"
+#include "enum_traits.hpp"
 
 namespace kt {
-///
-/// \brief Trait for linear enums (0, 1, 2, 3, ...)
-///
-struct enum_trait_linear {};
-///
-/// \brief Trait for power of two enums (1, 2, 4, 8, ...)
-///
-struct enum_trait_pot {};
-
 ///
 /// \brief Wrapper around an integral type used as bit flags
 ///
